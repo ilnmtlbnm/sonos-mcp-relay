@@ -34,15 +34,19 @@ export default {
     }
 
     if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: {
-          ...corsHeaders(origin),
-          "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
-          "Access-Control-Allow-Headers": "authorization,content-type,accept,mcp-session-id,mcp-protocol-version",
-          "Access-Control-Max-Age": "86400",
-        },
-      });
+      const headers = {
+        ...corsHeaders(origin),
+        "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "authorization,content-type,accept,mcp-session-id,mcp-protocol-version",
+        "Access-Control-Max-Age": "86400",
+      };
+      // Running this relay on your own machine while the page is served from
+      // https://trucs.ai is a public -> private request; Chrome needs the
+      // local server to opt in explicitly.
+      if (request.headers.get("access-control-request-private-network") === "true") {
+        headers["Access-Control-Allow-Private-Network"] = "true";
+      }
+      return new Response(null, { status: 204, headers });
     }
 
     const upstreamHeaders = new Headers();

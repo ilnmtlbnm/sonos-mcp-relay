@@ -31,6 +31,15 @@ chk("preflight Vary: Origin", r.headers.get("vary") === "Origin", r.headers.get(
 chk("preflight allows mcp-session-id hdr", (r.headers.get("access-control-allow-headers") || "").includes("mcp-session-id"), r.headers.get("access-control-allow-headers"));
 chk("exposes mcp-session-id", (r.headers.get("access-control-expose-headers") || "").includes("mcp-session-id"), r.headers.get("access-control-expose-headers"));
 
+// Private Network Access: a locally-run relay must opt in for an https page.
+r = await worker.fetch(new Request("https://w.dev/mcp", {
+  method: "OPTIONS",
+  headers: { origin: "https://trucs.ai", "access-control-request-private-network": "true" },
+}));
+chk("PNA opt-in when asked", r.headers.get("access-control-allow-private-network") === "true", r.headers.get("access-control-allow-private-network"));
+r = await worker.fetch(new Request("https://w.dev/mcp", { method: "OPTIONS", headers: { origin: "https://trucs.ai" } }));
+chk("no PNA header when not asked", r.headers.get("access-control-allow-private-network") === null, r.headers.get("access-control-allow-private-network"));
+
 r = await worker.fetch(new Request("https://w.dev/mcp", {
   method: "POST",
   headers: { origin: "https://trucs.ai", "content-type": "application/json", accept: "application/json, text/event-stream", authorization: "Bearer invalid" },
