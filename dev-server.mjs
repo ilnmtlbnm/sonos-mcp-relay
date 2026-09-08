@@ -11,8 +11,11 @@ createServer(async (req, res) => {
   const request = new Request(url, { method: req.method, headers: req.headers, body, duplex: "half" });
 
   const out = await worker.fetch(request);
-  // Method, path and status only -- never headers or bodies, tokens flow here.
-  console.log(`${new Date().toISOString().slice(11, 19)}  ${req.method.padEnd(7)} ${req.url.padEnd(22)} ${out.status}`);
+  // Method, path, status and origin only -- never auth headers or bodies.
+  // Origin matters because localhost and 127.0.0.1 are separate origins with
+  // separate localStorage, so switching spelling silently logs you out.
+  const origin = req.headers.origin || "-";
+  console.log(`${new Date().toISOString().slice(11, 19)}  ${req.method.padEnd(7)} ${req.url.padEnd(22)} ${String(out.status).padEnd(4)} ${origin}`);
   res.writeHead(out.status, Object.fromEntries(out.headers));
   if (out.body) {
     for await (const chunk of out.body) res.write(chunk);
