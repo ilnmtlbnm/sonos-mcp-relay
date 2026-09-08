@@ -68,5 +68,26 @@ chk("title falls back to coordinator name", (g.name || gPlayers[0]?.name || g.gr
 const oldPlayers = flat.filter(p => (g.playerIds && g.playerIds.includes(p.id)) || p.groupId === g.groupId);
 chk("old filter would have rendered empty", oldPlayers.length === 0, oldPlayers);
 
+// --- tool-level errors arrive inside a 200 response ---
+const resultText = r => (r?.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
+function toolError(r) {
+  const t = resultText(r);
+  if (r?.isError || /^error\b/i.test(t.trim())) return t || "tool call failed";
+  return null;
+}
+const STALE = "Error: The group_id is no longer valid, so nothing happened — the Sonos system has changed since it was issued. Call get_households_and_groups_and_players for a current one, then try again.";
+chk("detects Sonos stale-group error", !!toolError({ content: [{ type: "text", text: STALE }] }), "missed");
+chk("detects isError flag", !!toolError({ isError: true, content: [] }), "missed");
+chk("clean result is not an error", toolError({ content: [{ type: "text", text: '{"volume":26}' }] }) === null, "false positive");
+chk("stale regex matches the real message", /no longer valid|not valid|stale|ERROR_INVALID_OBJECT_ID/i.test(STALE), "no match");
+
+// --- resolving a group by player survives an id change ---
+let idx = [{ groupId: "OLD:1", players: ["BLOUPBLIP"] }];
+const groupIdForPlayer = (n) => idx.find(g => g.players.includes(n))?.groupId;
+chk("resolves before refresh", groupIdForPlayer("BLOUPBLIP") === "OLD:1", "?");
+idx = [{ groupId: "NEW:2", players: ["BLOUPBLIP"] }];           // Sonos reissued the id
+chk("resolves new id after refresh", groupIdForPlayer("BLOUPBLIP") === "NEW:2", groupIdForPlayer("BLOUPBLIP"));
+chk("unknown player yields undefined", groupIdForPlayer("Nope") === undefined, "?");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
