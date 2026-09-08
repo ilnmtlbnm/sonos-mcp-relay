@@ -6,6 +6,8 @@ const UPSTREAM = "https://mcp.ws.sonos.com";
 const ALLOWED_PATHS = new Set(["/mcp", "/mcp-oauth/token", "/mcp-oauth/register"]);
 const FORWARD_REQUEST_HEADERS = ["authorization", "content-type", "accept", "mcp-session-id", "mcp-protocol-version"];
 const EXPOSED_RESPONSE_HEADERS = "mcp-session-id,www-authenticate";
+// OAuth and MCP payloads are a few KB; anything larger is not a client of this page.
+const MAX_BODY_BYTES = 64 * 1024;
 
 function isAllowedOrigin(origin) {
   if (!origin) return false;
@@ -22,7 +24,7 @@ function corsHeaders(origin) {
 }
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request) {
     const url = new URL(request.url);
     const origin = request.headers.get("origin");
 
@@ -47,6 +49,10 @@ export default {
         headers["Access-Control-Allow-Private-Network"] = "true";
       }
       return new Response(null, { status: 204, headers });
+    }
+
+    if (Number(request.headers.get("content-length") || 0) > MAX_BODY_BYTES) {
+      return new Response("payload too large", { status: 413, headers: corsHeaders(origin) });
     }
 
     const upstreamHeaders = new Headers();
