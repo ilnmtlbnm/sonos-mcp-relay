@@ -1,4 +1,4 @@
-name = "sonos-mcp-proxy"
+name = "sonos-mcp-relay"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
 
