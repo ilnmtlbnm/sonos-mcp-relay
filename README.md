@@ -1,22 +1,26 @@
-# sonos-mcp-proxy
+# sonos-mcp-relay
 
 A CORS relay for the Sonos MCP server, so that a web page can be the MCP
 client. `mcp.ws.sonos.com` sends no `Access-Control-Allow-Origin`, which
 means a browser cannot call it directly; this Worker forwards three paths
 and adds the missing headers. Nothing else.
 
+Used by [trucs.ai/sonos](https://trucs.ai/sonos/)
+([source](https://github.com/idle-intelligence/trucs.ai/tree/main/sonos)).
 Personal project. Not affiliated with or endorsed by Sonos.
 
 ## Run it
 
-Hosted, on Cloudflare (free tier is far beyond hobby use):
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/idle-intelligence/sonos-mcp-relay)
 
-    npx wrangler login     # once
-    npx wrangler deploy    # prints the URL
+Or from a clone (free tier is far beyond hobby use):
+
+    npx wrangler@latest login     # once
+    npx wrangler@latest deploy    # prints the URL
 
 Locally, no account needed — the same code under plain Node:
 
-    node dev-server.mjs          # http://127.0.0.1:8787
+    node dev-server.mjs           # http://127.0.0.1:8787
 
 Then put the URL in the "relay" box on the page. A local relay works
 from the deployed page too (the Worker answers Chrome's Private Network
