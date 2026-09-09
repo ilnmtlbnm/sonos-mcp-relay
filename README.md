@@ -56,6 +56,5 @@ passes through the relay. The relay never sees a Sonos password.
 ## Tests
 
     node wtest.mjs        # offline, upstream stubbed
-    node logic-test.mjs   # the page's parsing, importing the real code
     LIVE=1 node wtest.mjs # adds two real requests; registers a throwaway
                           # OAuth client with Sonos, so not for CI
