@@ -1,3 +1,25 @@
 name = "sonos-mcp-proxy"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
+
+# Per-IP rate limits (needs wrangler >= 4.36; period must be 10 or 60 s).
+# Generous for a person clicking, tight for a script. Registration creates
+# state on Sonos's side, so it gets its own, stricter limit.
+[[ratelimits]]
+name = "RELAY_LIMIT"
+namespace_id = "1"
+
+  [ratelimits.simple]
+  limit = 120
+  period = 60
+
+[[ratelimits]]
+name = "REGISTER_LIMIT"
+namespace_id = "2"
+
+  [ratelimits.simple]
+  limit = 3
+  period = 60
+
+# Deliberately no [observability] block: enabling Workers Logs would record
+# requests platform-side, and bearer tokens transit this Worker.

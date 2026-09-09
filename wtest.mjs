@@ -91,6 +91,18 @@ r = await worker.fetch(req("/mcp", { method: "POST", headers: H(OK, { "content-l
 chk("oversized body -> 413", r.status === 413, r.status);
 chk("413 carries ACAO so the page can see it", r.headers.get("access-control-allow-origin") === OK, "missing");
 
+// --- rate limiting (bindings from wrangler.toml; absent under dev-server) --
+const limiter = ok => ({ limit: async () => ({ success: ok }) });
+r = await worker.fetch(req("/mcp", { method: "POST", headers: H(OK) }), { RELAY_LIMIT: limiter(false), REGISTER_LIMIT: limiter(true) });
+chk("over limit -> 429", r.status === 429, r.status);
+chk("429 carries ACAO and Retry-After", r.headers.get("access-control-allow-origin") === OK && r.headers.get("retry-after") === "60", "missing");
+r = await worker.fetch(req("/mcp-oauth/register", { method: "POST", headers: H(OK), body: "{}" }), { RELAY_LIMIT: limiter(true), REGISTER_LIMIT: limiter(false) });
+chk("register has its own limiter", r.status === 429, r.status);
+r = await worker.fetch(req("/mcp", { method: "OPTIONS", headers: H(OK) }), { RELAY_LIMIT: limiter(false), REGISTER_LIMIT: limiter(false) });
+chk("preflight is not rate limited", r.status === 204, r.status);
+r = await worker.fetch(req("/mcp", { method: "POST", headers: H(OK) }));
+chk("no bindings (local dev) -> no limiting", r.status === 401, r.status);
+
 // --- live (opt-in) --------------------------------------------------------
 if (process.env.LIVE) {
   globalThis.fetch = realFetch;

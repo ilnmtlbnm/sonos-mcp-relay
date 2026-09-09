@@ -24,7 +24,7 @@ function corsHeaders(origin) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get("origin");
 
@@ -49,6 +49,17 @@ export default {
         headers["Access-Control-Allow-Private-Network"] = "true";
       }
       return new Response(null, { status: 204, headers });
+    }
+
+    // Per-IP limits (wrangler.toml), so a script can't exhaust the request
+    // quota or spam Sonos's registration endpoint through here. The bindings
+    // don't exist under dev-server.mjs, which passes no env.
+    const limiter = url.pathname === "/mcp-oauth/register" ? env?.REGISTER_LIMIT : env?.RELAY_LIMIT;
+    if (limiter) {
+      const { success } = await limiter.limit({ key: request.headers.get("cf-connecting-ip") || "unknown" });
+      if (!success) {
+        return new Response("too many requests", { status: 429, headers: { ...corsHeaders(origin), "Retry-After": "60" } });
+      }
     }
 
     if (Number(request.headers.get("content-length") || 0) > MAX_BODY_BYTES) {

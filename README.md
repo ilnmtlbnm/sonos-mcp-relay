@@ -11,7 +11,8 @@ Personal project. Not affiliated with or endorsed by Sonos.
 
 Hosted, on Cloudflare (free tier is far beyond hobby use):
 
-    npx wrangler deploy
+    npx wrangler login     # once
+    npx wrangler deploy    # prints the URL
 
 Locally, no account needed — the same code under plain Node:
 
@@ -40,9 +41,14 @@ What it cannot do: authenticate callers. The origin allowlist
 can set an `Origin` header. So the relay does not protect *itself* from
 strangers — it protects *users* only in that it holds no state and
 forwards nothing but their own request. A stranger cannot obtain
-anyone's token through it; they can burn the operator's request quota.
-If you run one publicly, add a per-IP rate-limiting rule in the
-Cloudflare dashboard.
+anyone's token through it; they could burn the operator's request quota
+(100 000/day on the free plan) or spam Sonos's registration endpoint.
+Hence per-IP rate limits, set in `wrangler.toml`: 120 requests a minute
+overall, 3 a minute for registration. Tune them there. Requires
+wrangler 4.36 or newer.
+
+There is deliberately no `[observability]` block: turning on Workers
+Logs would record requests platform-side.
 
 The `authorize` step is a browser navigation to Sonos itself and never
 passes through the relay. The relay never sees a Sonos password.
