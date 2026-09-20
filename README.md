@@ -11,7 +11,7 @@ Personal project. Not affiliated with or endorsed by Sonos.
 
 ## Run it
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/idle-intelligence/sonos-mcp-relay)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ilnmtlbnm/sonos-mcp-relay)
 
 Or from a clone (free tier is far beyond hobby use):
 
