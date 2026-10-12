@@ -66,6 +66,15 @@ export default {
       return new Response("payload too large", { status: 413, headers: corsHeaders(origin) });
     }
 
+    // Count the bytes actually received; Content-Length can be absent or wrong.
+    let body;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      body = await request.arrayBuffer();
+      if (body.byteLength > MAX_BODY_BYTES) {
+        return new Response("payload too large", { status: 413, headers: corsHeaders(origin) });
+      }
+    }
+
     const upstreamHeaders = new Headers();
     for (const name of FORWARD_REQUEST_HEADERS) {
       const value = request.headers.get(name);
@@ -76,8 +85,7 @@ export default {
     const upstream = await fetch(UPSTREAM + url.pathname + url.search, {
       method: request.method,
       headers: upstreamHeaders,
-      body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
-      duplex: "half",
+      body,
     });
 
     const responseHeaders = new Headers(corsHeaders(origin));
