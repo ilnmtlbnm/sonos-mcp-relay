@@ -18,13 +18,11 @@ Or from a clone (free tier is far beyond hobby use):
     npx wrangler@latest login     # once
     npx wrangler@latest deploy    # prints the URL
 
-Locally, no account needed — the same code under plain Node:
+Locally, no account needed, the same code under plain Node:
 
     node dev-server.mjs           # http://127.0.0.1:8787
 
-Then put the URL in the "relay" box on the page. A local relay works
-from the deployed page too (the Worker answers Chrome's Private Network
-Access preflight).
+Then put the URL in the "relay" box on the page.
 
 ## What it does, and doesn't
 
@@ -36,14 +34,14 @@ Access preflight).
   and everything else are dropped.
 - Streams the response body back unchanged, with CORS headers added and
   `Mcp-Session-Id` / `WWW-Authenticate` exposed.
-- Stores nothing. Logs nothing — bearer tokens transit here, and the
+- Stores nothing. Logs nothing: bearer tokens transit here, and the
   code says so.
 - Rejects bodies over 64 KB.
 
 What it cannot do: authenticate callers. The origin allowlist
 (`https://trucs.ai` and localhost) is a browser mechanism; any script
 can set an `Origin` header. So the relay does not protect *itself* from
-strangers — it protects *users* only in that it holds no state and
+strangers, it protects *users* only in that it holds no state and
 forwards nothing but their own request. A stranger cannot obtain
 anyone's token through it; they could burn the operator's request quota
 (100 000/day on the free plan) or spam Sonos's registration endpoint.
