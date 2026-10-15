@@ -24,6 +24,28 @@ Locally, no account needed, the same code under plain Node:
 
 Then put the URL in the "relay" box on the page.
 
+## Connecting
+
+The page talks to a relay whose URL you set in its "relay" box. There are three ways to get one.
+
+| Option | How | What it sees |
+| --- | --- | --- |
+| Hosted relay | The page's default. Nothing to set up. | Operated by the page's author. Your bearer token passes through it on every request. The code stores and logs nothing, but you are trusting that the deployed code is this code. |
+| Your own Cloudflare Worker | The deploy button above, or `npx wrangler@latest deploy`. Paste the printed `workers.dev` URL into the relay box. | Only your Cloudflare account sees the traffic. Workers Logs are off in `wrangler.toml`. |
+| Local relay | `node dev-server.mjs`, then paste `http://127.0.0.1:8787`. | Nothing leaves your machine except the forwarded request to Sonos. |
+
+Tokens never stay in the relay. The page keeps them in your browser's local storage, next to the OAuth client id the relay registered for you. "Log out" on the page deletes both. Changing the relay URL also clears them, because they were issued through the previous relay. To cut off access on the Sonos side as well, remove the app from the apps authorized on your Sonos account.
+
+The relay answers browser requests only from `https://trucs.ai` and from `http://localhost` or `http://127.0.0.1` on any port. Any other origin gets a 403. If you serve the page from somewhere else, add your origin to `isAllowedOrigin` in `src/index.js` before deploying.
+
+Rate limits are per client IP and apply to the Cloudflare deployments: 120 requests a minute across the three forwarded paths, and 3 a minute for registration. A client over the limit gets a 429 with `Retry-After: 60`. The local relay has no limits. Both are set in `wrangler.toml`.
+
+A page served over https that calls `http://127.0.0.1` is a mixed-content request. Chrome and Firefox treat loopback as secure and allow it. Chrome also sends a private-network preflight, which the relay answers. Where a browser blocks it, serve the page from localhost or use the Cloudflare option.
+
+## Tools
+
+In manual mode the page asks the Sonos server for its tool list with `tools/list` and shows every tool the server returns, unfiltered. A smaller subset of 12 or 13 tools only matters for a future model-driven mode, where a small model chooses between tools and does better with fewer of them. It does not apply when a person picks the tool.
+
 ## What it does, and doesn't
 
 - Forwards only `POST /mcp-oauth/register`, `POST /mcp-oauth/token`,
