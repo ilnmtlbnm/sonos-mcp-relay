@@ -68,7 +68,7 @@ The page talks to a relay whose URL you set in its "relay" box. There are three 
 | Option | How | What it sees |
 | --- | --- | --- |
 | Hosted relay | The page's default. Nothing to set up. | Operated by the page's author. Your tokens and Sonos data pass through it (see Threat model). The code stores and logs nothing, but you are trusting that the deployed code is this code, and you cannot verify that from the outside. |
-| Your own Cloudflare Worker | The deploy button above, or `npx wrangler@4.36.0 deploy`. Paste the printed `workers.dev` URL into the relay box. | Only your Cloudflare account sees the traffic. `wrangler.toml` sets Workers Logs to off; check the dashboard, `wrangler tail` and Logpush are account settings it does not control. |
+| Your own Cloudflare Worker | The deploy button above, or `npx wrangler@4.36.0 deploy`. Paste the printed `workers.dev` URL into the relay box. | Only your Cloudflare account sees the traffic. `wrangler.toml` sets Workers Logs to off; `wrangler tail` and Logpush are account settings it does not control. |
 | Local relay | `node dev-server.mjs`, then paste `http://127.0.0.1:8787`. | Nothing leaves your machine except the forwarded request to Sonos. |
 
 Tokens never stay in the relay. The page keeps them in your browser's local storage, next to the OAuth client id the relay registered for you. "Log out" on the page deletes both. Changing the relay URL also clears them, because they were issued through the previous relay. To cut off access on the Sonos side as well, remove the app from the apps authorized on your Sonos account.
