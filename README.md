@@ -58,7 +58,8 @@ All deployment settings are in `src/config.js`:
 To front another server, edit those values, set the rate limits in
 `wrangler.toml`, run `npm test`, and deploy. If the server needs other
 request or response headers (for example a different session header), list
-them there. The `ALLOW_LOCALHOST` variable in `wrangler.toml` stays
+them there, and never add `cookie`, `set-cookie`, `authorization` or similar
+headers beyond what the upstream needs. The `ALLOW_LOCALHOST` variable in `wrangler.toml` stays
 `"false"` for a public deployment.
 
 ## Connecting
@@ -86,7 +87,7 @@ In manual mode the page asks the Sonos server for its tool list with `tools/list
 ## What it does, and doesn't
 
 - Forwards only `POST /mcp-oauth/register`, `POST /mcp-oauth/token` and
-  `GET|POST|DELETE /mcp` to a hardcoded upstream; other methods get 405.
+  `GET|POST|DELETE /mcp` to the upstream fixed per deployment; other methods get 405.
   It cannot be pointed elsewhere, and does not follow upstream redirects.
 - Copies only `authorization`, `content-type`, `accept`,
   `mcp-session-id`, `mcp-protocol-version` upstream, and only

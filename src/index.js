@@ -10,6 +10,8 @@ const LOCAL_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 export function clientKey(ip) {
   if (!ip) return "unknown";
   if (!ip.includes(":")) return ip;
+  // IPv4-mapped (::ffff:1.2.3.4) and similar: key on the embedded IPv4 address.
+  if (ip.includes(".")) return ip.slice(ip.lastIndexOf(":") + 1);
   const [head, tail] = ip.split("::");
   const h = head ? head.split(":") : [];
   let groups = h;
@@ -63,14 +65,16 @@ export function createRelay(config) {
   };
 
   // Every redirect_uri of a registration request must be on an allowed origin.
-  const redirectUrisOk = (bytes, env) => {
+  // Returns the parsed document, or null when the request is refused.
+  const checkedRegistration = (bytes, env) => {
     let doc;
-    try { doc = JSON.parse(new TextDecoder().decode(bytes)); } catch { return false; }
+    try { doc = JSON.parse(new TextDecoder().decode(bytes)); } catch { return null; }
     const uris = doc?.redirect_uris;
-    if (!Array.isArray(uris) || uris.length === 0) return false;
-    return uris.every(u => {
+    if (!Array.isArray(uris) || uris.length === 0) return null;
+    const ok = uris.every(u => {
       try { return isAllowedOrigin(new URL(u).origin, env); } catch { return false; }
     });
+    return ok ? doc : null;
   };
 
   return {
@@ -119,8 +123,12 @@ export function createRelay(config) {
       if (request.method !== "GET" && request.method !== "HEAD") {
         body = await readLimited(request.body, config.maxBodyBytes);
         if (body === null) return reply("payload too large", 413, origin);
-        if (isRegister && !redirectUrisOk(body, env)) {
-          return reply("redirect_uris must be on an allowed origin", 400, origin);
+        if (isRegister) {
+          // Forward what was validated, not the original bytes, so the
+          // upstream cannot parse the document differently (duplicate keys).
+          const doc = checkedRegistration(body, env);
+          if (!doc) return reply("redirect_uris must be on an allowed origin", 400, origin);
+          body = JSON.stringify(doc);
         }
       }
 

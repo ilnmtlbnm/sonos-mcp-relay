@@ -195,6 +195,10 @@ chk("register localhost redirect with flag", r.status === 201, r.status);
 r = await reg('{"redirect_uris":["http://localhost:8000/"]}', { ALLOW_LOCALHOST: "false" });
 chk("register localhost redirect, flag false", r.status === 400, r.status);
 
+upstreamCalls.length = 0;
+r = await reg('{"redirect_uris":["https://evil.example/x"],"redirect_uris":["https://trucs.ai/x"],"a":1}');
+chk("register forwards the validated document", r.status === 201 && upstreamCalls[0]?.init.body === '{"redirect_uris":["https://trucs.ai/x"],"a":1}', upstreamCalls[0]?.init.body);
+
 // --- generic config (reuse for another MCP server) ------------------------
 const other = createRelay({
   upstream: "https://mcp.example.test", routes: { "/rpc": ["POST"] }, registerPath: null,
@@ -232,6 +236,7 @@ chk("IPv6 keyed by /64", keys[0] === keys[1] && keys[0] === "2001:db8:1:2::/64",
 chk("IPv4 keyed as is", keys[2] === "203.0.113.7", keys[2]);
 chk("compressed IPv6 expands", keys[3] === "2001:db8:0:0::/64", keys[3]);
 chk("missing ip -> shared key", keys[4] === "unknown", keys[4]);
+chk("IPv4-mapped keyed as the IPv4", clientKey("::ffff:1.2.3.4") === "1.2.3.4" && clientKey("::ffff:1.2.3.4") !== clientKey("::1"), clientKey("::ffff:1.2.3.4"));
 chk("clientKey ::1", clientKey("::1") === "0:0:0:0::/64", clientKey("::1"));
 r = await worker.fetch(req("/mcp", { method: "POST", headers: H(OK) }));
 chk("no bindings (local dev) -> no limiting", r.status === 401, r.status);
