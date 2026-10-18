@@ -21,5 +21,13 @@ namespace_id = "2"
   limit = 3
   period = 60
 
-# Deliberately no [observability] block: enabling Workers Logs would record
-# requests platform-side, and bearer tokens transit this Worker.
+# Accept http://localhost and http://127.0.0.1 origins. Off by default so a
+# public deployment only answers the origins listed in src/config.js. Turn on
+# only for a private deployment you develop against.
+[vars]
+ALLOW_LOCALHOST = "false"
+
+# Workers Logs would record requests platform-side, and bearer tokens transit
+# this Worker, so keep them off.
+[observability]
+enabled = false
